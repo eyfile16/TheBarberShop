@@ -4,7 +4,15 @@ const mongoose = require('mongoose');
 const path = require('path');
 
 const app = express();
-app.use(cors());
+
+// === CONFIGURACIÓN CORS REQUERIDA ===
+app.use(cors({
+  origin: 'https://thebarbershop-l7sz.onrender.com', // Tu frontend autorizado
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+// ====================================
+
 app.use(express.json());
 
 // Reemplaza <db_password> con tu contraseña real (ej. Cristian123)
