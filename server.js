@@ -1,11 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path'); // <- RESTAURADO
 
 const app = express();
 
 // === EL PORTERO DE SEGURIDAD (CORS) ===
-// Aquí le decimos que SOLO acepte peticiones de tu página en Render
 app.use(cors({
   origin: 'https://thebarbershop-l7sz.onrender.com', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -35,17 +35,11 @@ const Turno = mongoose.model('Turno', new mongoose.Schema({
 }));
 
 // === RUTAS DE TU API ===
-
-// Leer todos los turnos
 app.get('/api/turnos', async (req, res) => {
-  try { 
-    res.json(await Turno.find().sort({ sort_date: 1, times: 1 })); 
-  } catch (err) { 
-    res.status(500).json({ error: err.message }); 
-  }
+  try { res.json(await Turno.find().sort({ sort_date: 1, times: 1 })); } 
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Guardar un turno nuevo
 app.post('/api/turnos', async (req, res) => {
   try {
     const { barber, service, date, times, clientName, clientPhone } = req.body;
@@ -61,30 +55,26 @@ app.post('/api/turnos', async (req, res) => {
     });
     await nuevo.save();
     res.json({ success: true });
-  } catch (err) { 
-    res.status(500).json({ error: err.message }); 
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Editar un turno
 app.put('/api/turnos/:id', async (req, res) => {
-  try {
-    await Turno.findByIdAndUpdate(req.params.id, req.body);
-    res.json({ success: true });
-  } catch (err) { 
-    res.status(500).json({ error: err.message }); 
-  }
+  try { await Turno.findByIdAndUpdate(req.params.id, req.body); res.json({ success: true }); } 
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Borrar un turno
 app.delete('/api/turnos/:id', async (req, res) => {
-  try {
-    await Turno.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  try { await Turno.findByIdAndDelete(req.params.id); res.json({ success: true }); } 
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+// === 🚨 ESTO FUE LO QUE QUITÉ POR ACCIDENTE 🚨 ===
+// Servir Frontend (Carpeta dist)
+app.use(express.static(path.join(__dirname, 'dist')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+// =================================================
 
 // Encender el servidor
 const PORT = process.env.PORT || 3000;
