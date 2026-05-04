@@ -10,6 +10,7 @@
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^4.22.1",
+    "mongodb": "^7.2.0",
     "mongoose": "^8.23.0",
     "sqlite3": "^6.0.1"
   }
