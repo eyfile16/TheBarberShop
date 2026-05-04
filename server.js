@@ -16,7 +16,7 @@ app.use(cors({
 app.use(express.json());
 
 // Reemplaza <db_password> con tu contraseña real (ej. Cristian123)
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:Cristian123@cluster0.tparnms.mongodb.net/barberia?retryWrites=true&w=majority";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:<db_password>@cluster0.tparnms.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Conectado a MongoDB Atlas'))
