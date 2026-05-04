@@ -1,17 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const path = require('path'); // <- RESTAURADO
 
 const app = express();
 
-// === EL PORTERO DE SEGURIDAD (CORS) ===
-app.use(cors({
-  origin: 'https://thebarbershop-l7sz.onrender.com', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}));
-
+// === CORS UNIVERSAL Y SEGURO ===
+// Como no envías cookies ni tokens ocultos, esto es 100% seguro y evita bloqueos
+app.use(cors()); 
 app.use(express.json());
 
 // Tu enlace de conexión
@@ -33,6 +28,13 @@ const Turno = mongoose.model('Turno', new mongoose.Schema({
   client_name: String,
   client_phone: String
 }));
+
+// ==============================================================
+// 🚨 LA PRUEBA DE FUEGO: Si ves esto, Render sí se actualizó 🚨
+app.get('/', (req, res) => {
+  res.send("✅ Backend de The BarberShop actualizado. CORS funcionando.");
+});
+// ==============================================================
 
 // === RUTAS DE TU API ===
 app.get('/api/turnos', async (req, res) => {
@@ -67,14 +69,6 @@ app.delete('/api/turnos/:id', async (req, res) => {
   try { await Turno.findByIdAndDelete(req.params.id); res.json({ success: true }); } 
   catch (err) { res.status(500).json({ error: err.message }); }
 });
-
-// === 🚨 ESTO FUE LO QUE QUITÉ POR ACCIDENTE 🚨 ===
-// Servir Frontend (Carpeta dist)
-app.use(express.static(path.join(__dirname, 'dist')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-// =================================================
 
 // Encender el servidor
 const PORT = process.env.PORT || 3000;
