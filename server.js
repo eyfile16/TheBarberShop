@@ -1,27 +1,28 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const path = require('path');
 
 const app = express();
 
-// === CONFIGURACIÓN CORS REQUERIDA ===
+// === EL PORTERO DE SEGURIDAD (CORS) ===
+// Aquí le decimos que SOLO acepte peticiones de tu página en Render
 app.use(cors({
-  origin: 'https://thebarbershop-l7sz.onrender.com', // Tu frontend autorizado
+  origin: 'https://thebarbershop-l7sz.onrender.com', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-// ====================================
 
 app.use(express.json());
 
-// Reemplaza <db_password> con tu contraseña real (ej. Cristian123)
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:<db_password>@cluster0.tparnms.mongodb.net/?appName=Cluster0";
+// Tu enlace de conexión
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:Cristian123@cluster0.tparnms.mongodb.net/barberia?retryWrites=true&w=majority";
 
+// Conexión a Base de Datos
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Conectado a MongoDB Atlas'))
   .catch(err => console.error('❌ Error MongoDB:', err));
 
+// Modelo de la Base de Datos
 const Turno = mongoose.model('Turno', new mongoose.Schema({
   barber_name: String,
   service_name: String,
@@ -33,12 +34,18 @@ const Turno = mongoose.model('Turno', new mongoose.Schema({
   client_phone: String
 }));
 
-// API Routes
+// === RUTAS DE TU API ===
+
+// Leer todos los turnos
 app.get('/api/turnos', async (req, res) => {
-  try { res.json(await Turno.find().sort({ sort_date: 1, times: 1 })); } 
-  catch (err) { res.status(500).json({ error: err.message }); }
+  try { 
+    res.json(await Turno.find().sort({ sort_date: 1, times: 1 })); 
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
+// Guardar un turno nuevo
 app.post('/api/turnos', async (req, res) => {
   try {
     const { barber, service, date, times, clientName, clientPhone } = req.body;
@@ -54,19 +61,31 @@ app.post('/api/turnos', async (req, res) => {
     });
     await nuevo.save();
     res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
+// Editar un turno
+app.put('/api/turnos/:id', async (req, res) => {
+  try {
+    await Turno.findByIdAndUpdate(req.params.id, req.body);
+    res.json({ success: true });
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
+});
+
+// Borrar un turno
 app.delete('/api/turnos/:id', async (req, res) => {
-  await Turno.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+  try {
+    await Turno.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Servir Frontend (Carpeta dist)
-app.use(express.static(path.join(__dirname, 'dist')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
+// Encender el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Servidor en puerto ${PORT}`));
