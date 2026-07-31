@@ -2,12 +2,21 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 
 // --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json());
+
+// --- LIMITADOR DE INTENTOS PARA LOGIN (Seguridad Antifuerza Bruta) ---
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 10, // Máximo 10 intentos fallidos por IP
+    message: { error: 'Demasiados intentos de inicio de sesión. Intente más tarde.' }
+});
 
 // --- CONEXIÓN A MONGODB (Conexión Directa y Forzada) ---
 const MONGO_URI = process.env.MONGO_URI || "mongodb://thebarbershop:thebarbershop@cluster0-shard-00-00.tparnms.mongodb.net:27017,cluster0-shard-00-01.tparnms.mongodb.net:27017,cluster0-shard-00-02.tparnms.mongodb.net:27017/barbershop_db?ssl=true&authSource=admin&retryWrites=true&w=majority";
@@ -41,22 +50,31 @@ const Barber = mongoose.model('Barber', new mongoose.Schema({
 
 // --- RUTAS DE API ---
 
-// Login (Súper Admin y Barberos)
-// Login (Súper Admin y Barberos)
-app.post('/api/login', async (req, res) => {
-    console.log("👉 DATOS QUE LLEGARON DESDE LA PÁGINA:", req.body); // <-- El chismoso
+// Login (Súper Admin y Barberos con Bcrypt)
+app.post('/api/login', loginLimiter, async (req, res) => {
+    console.log("👉 DATOS QUE LLEGARON DESDE LA PÁGINA:", req.body);
 
     const { username, password } = req.body;
     try {
+        // Validación del Súper Admin (puedes moverlo a variables de entorno si gustas)
         if (username === 'admin' && password === 'barberia123') {
             return res.json({ role: 'admin' });
         }
-        const barber = await Barber.findOne({ username, password });
-        if (barber) {
-            return res.json({ role: 'barber', barber });
+
+        // Buscar barbero por su username
+        const barber = await Barber.findOne({ username });
+        if (barber && barber.password) {
+            // Comparar la contraseña ingresada con el hash guardado en MongoDB
+            const passwordMatch = await bcrypt.compare(password, barber.password);
+            if (passwordMatch) {
+                return res.json({ role: 'barber', barber });
+            }
         }
+
         res.status(401).json({ error: 'Credenciales incorrectas' });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
 });
 
 // Barberos
@@ -69,7 +87,14 @@ app.get('/api/barbers', async (req, res) => {
 
 app.post('/api/barbers', async (req, res) => {
     try {
-        const nuevo = new Barber(req.body);
+        const datosBarber = req.body;
+        // Encriptar la contraseña antes de guardarla si viene incluida
+        if (datosBarber.password) {
+            const saltRounds = 10;
+            datosBarber.password = await bcrypt.hash(datosBarber.password, saltRounds);
+        }
+
+        const nuevo = new Barber(datosBarber);
         await nuevo.save();
         res.json(nuevo);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -77,7 +102,14 @@ app.post('/api/barbers', async (req, res) => {
 
 app.put('/api/barbers/:id', async (req, res) => {
     try {
-        await Barber.findByIdAndUpdate(req.params.id, req.body);
+        const datosActualizar = req.body;
+        // Si actualizan la contraseña, la volvemos a encriptar
+        if (datosActualizar.password) {
+            const saltRounds = 10;
+            datosActualizar.password = await bcrypt.hash(datosActualizar.password, saltRounds);
+        }
+
+        await Barber.findByIdAndUpdate(req.params.id, datosActualizar);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
