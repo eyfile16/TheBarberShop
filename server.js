@@ -42,7 +42,10 @@ const Barber = mongoose.model('Barber', new mongoose.Schema({
 // --- RUTAS DE API ---
 
 // Login (Súper Admin y Barberos)
+// Login (Súper Admin y Barberos)
 app.post('/api/login', async (req, res) => {
+    console.log("👉 DATOS QUE LLEGARON DESDE LA PÁGINA:", req.body); // <-- El chismoso
+
     const { username, password } = req.body;
     try {
         if (username === 'admin' && password === 'barberia123') {
