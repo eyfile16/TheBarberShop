@@ -7,6 +7,9 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// 🔥 1. SOLUCIÓN PARA RENDER: Confiar en el proxy para que express-rate-limit no bloquee el servidor
+app.set('trust proxy', 1);
+
 // --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json());
@@ -19,14 +22,18 @@ const loginLimiter = rateLimit({
 });
 
 // --- CONEXIÓN A MONGODB ---
-const MONGO_URI = process.env.MONGO_URI || "mongodb://thebarbershop:thebarbershop@cluster0-shard-00-00.tparnms.mongodb.net:27017,cluster0-shard-00-01.tparnms.mongodb.net:27017,cluster0-shard-00-02.tparnms.mongodb.net:27017/barbershop_db?ssl=true&authSource=admin&retryWrites=true&w=majority";
+// ⚠️ RECUERDA: Cambia "TU_CONTRASEÑA_AQUI" por la contraseña limpia que creaste en Atlas (ej. Barberia2026)
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:thebarbershop@cluster0.tparnms.mongodb.net/barbershop_db?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI, {
-    serverSelectionTimeoutMS: 20000,
-    socketTimeoutMS: 45000
+    serverSelectionTimeoutMS: 5000, // Bajamos el tiempo para que no se quede colgado 10 segundos si falla
+    family: 4 // 🔥 2. SOLUCIÓN DEFINITIVA: Fuerza a Render a usar IPv4 para comunicarse con Atlas
 })
-.then(() => console.log('✅ Conectado a MongoDB Atlas'))
-.catch(err => console.error('❌ Error fatal al conectar:', err));
+.then(() => console.log('✅✅✅ ÉXITO: Conectado a MongoDB Atlas'))
+.catch(err => {
+    console.error('❌❌❌ ERROR FATAL DE CONEXIÓN A MONGO:', err.message);
+    process.exit(1); // Apaga el proceso si falla para reiniciar limpio
+});
 
 // --- MODELOS ---
 const Turno = mongoose.model('Turno', new mongoose.Schema({
@@ -48,7 +55,6 @@ const Barber = mongoose.model('Barber', new mongoose.Schema({
     password: { type: String, required: false }
 }));
 
-// NUEVO: Modelo de Servicios
 const Service = mongoose.model('Service', new mongoose.Schema({
     name: { type: String, required: true },
     price: { type: Number, required: true }
@@ -112,7 +118,7 @@ app.delete('/api/barbers/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// NUEVO: Servicios (CRUD)
+// Servicios (CRUD)
 app.get('/api/services', async (req, res) => {
     try {
         const services = await Service.find({});
