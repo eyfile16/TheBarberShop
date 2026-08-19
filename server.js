@@ -22,17 +22,17 @@ const loginLimiter = rateLimit({
 });
 
 // --- CONEXIÓN A MONGODB ---
-// ⚠️ RECUERDA: Cambia "TU_CONTRASEÑA_AQUI" por la contraseña limpia que creaste en Atlas (ej. Barberia2026)
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:thebarbershop@cluster0.tparnms.mongodb.net/barbershop_db?retryWrites=true&w=majority";
+// Usando tu clave limpia Barberia2026 que creaste en Atlas
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:Barberia2026@cluster0.tparnms.mongodb.net/barbershop_db?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI, {
-    serverSelectionTimeoutMS: 5000, // Bajamos el tiempo para que no se quede colgado 10 segundos si falla
+    serverSelectionTimeoutMS: 5000, 
     family: 4 // 🔥 2. SOLUCIÓN DEFINITIVA: Fuerza a Render a usar IPv4 para comunicarse con Atlas
 })
 .then(() => console.log('✅✅✅ ÉXITO: Conectado a MongoDB Atlas'))
 .catch(err => {
     console.error('❌❌❌ ERROR FATAL DE CONEXIÓN A MONGO:', err.message);
-    process.exit(1); // Apaga el proceso si falla para reiniciar limpio
+    process.exit(1); 
 });
 
 // --- MODELOS ---
@@ -55,9 +55,13 @@ const Barber = mongoose.model('Barber', new mongoose.Schema({
     password: { type: String, required: false }
 }));
 
+// 🔥 3. MODELO DE SERVICIOS ACTUALIZADO (Con descripción y duración)
+// 🔥 EL NUEVO MODELO DE SERVICIOS
 const Service = mongoose.model('Service', new mongoose.Schema({
     name: { type: String, required: true },
-    price: { type: Number, required: true }
+    price: { type: Number, required: true },
+    description: { type: String, required: false }, // ESTO PERMITE GUARDAR LA DESCRIPCIÓN
+    duration: { type: Number, default: 1 } // ESTO PERMITE GUARDAR LAS 2 HORAS
 }));
 
 // --- RUTAS DE API ---
