@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -23,7 +24,12 @@ const loginLimiter = rateLimit({
 
 // --- CONEXIÓN A MONGODB ---
 // Usando tu clave limpia Barberia2026 que creaste en Atlas
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://thebarbershop:Barberia2026@cluster0.tparnms.mongodb.net/barbershop_db?retryWrites=true&w=majority";
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+    console.error("❌ ERROR: No se encontró la variable MONGO_URI. Revisa tu archivo .env o la configuración de Render.");
+    process.exit(1);
+}
 
 mongoose.connect(MONGO_URI, {
     serverSelectionTimeoutMS: 5000, 
