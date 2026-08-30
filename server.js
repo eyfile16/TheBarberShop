@@ -58,7 +58,8 @@ const Barber = mongoose.model('Barber', new mongoose.Schema({
     whatsapp_number: { type: String, required: true },
     status: { type: String, default: 'Disponible' },
     username: { type: String, required: false },
-    password: { type: String, required: false }
+    password: { type: String, required: false },
+    image: { type: String, required: false } // 🔥 EL NUEVO CAMPO PARA LA URL DE LA FOTO
 }));
 
 // 🔥 3. MODELO DE SERVICIOS ACTUALIZADO (Con descripción y duración)
